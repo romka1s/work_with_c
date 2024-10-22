@@ -1,8 +1,8 @@
-#include <stdio.h>
+#include "sort_lines.h"
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
-// Чтение строки из файла
 char * fgetline(FILE *f) {
     const int SIZE = 8;
     char *a = malloc(sizeof(char) * SIZE);
@@ -30,6 +30,8 @@ char * fgetline(FILE *f) {
     a[i] = '\0';
     return a;
 }
+
+// Чтение всех строк из файла
 char **give_mas(FILE *f, int *count) {
     const int SIZE = 8;
     int i = 0;
@@ -67,24 +69,17 @@ char **give_mas(FILE *f, int *count) {
     return MAS;
 }
 
+// Функция сравнения строк для qsort (лексикографический порядок)
 int compare_strings(const void *a, const void *b) {
     const char *str1 = *(const char **)a;
     const char *str2 = *(const char **)b;
     return strcmp(str1, str2);
 }
 
-int main(void) {
-    FILE *f = fopen("data.txt", "r");
-    if (f == NULL) {printf("Error opening file\n");return 1;}
-
-    int count;
-    char **Mas = give_mas(f, &count);
-    fclose(f);
-
-    qsort(Mas, count, sizeof(char*), compare_strings);
+// Освобождение памяти, занятой массивом строк
+void free_lines(char **lines, int count) {
     for (int i = 0; i < count; i++) {
-        printf("%s\n", Mas[i]);
+        free(lines[i]);
     }
-    free(Mas);
-    return 0;
+    free(lines);
 }

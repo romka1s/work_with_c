@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-// Чтение строки из файла
 char * fgetline(FILE *f) {
     const int SIZE = 8;
     char *a = malloc(sizeof(char) * SIZE);
@@ -67,24 +66,57 @@ char **give_mas(FILE *f, int *count) {
     return MAS;
 }
 
+// Функция сравнения строк для qsort (лексикографический порядок)
 int compare_strings(const void *a, const void *b) {
     const char *str1 = *(const char **)a;
     const char *str2 = *(const char **)b;
     return strcmp(str1, str2);
 }
 
-int main(void) {
-    FILE *f = fopen("data.txt", "r");
-    if (f == NULL) {printf("Error opening file\n");return 1;}
-
-    int count;
-    char **Mas = give_mas(f, &count);
-    fclose(f);
-
-    qsort(Mas, count, sizeof(char*), compare_strings);
-    for (int i = 0; i < count; i++) {
-        printf("%s\n", Mas[i]);
+int main(int argc, char *argv[]) {
+    // Проверка количества аргументов командной строки
+    if (argc != 3) {
+        fprintf(stderr, "Использование: %s <входной_файл> <выходной_файл>\n", argv[0]); return 1;
     }
+
+    // open input file
+    FILE *f_in = fopen(argv[1], "r");
+    if (f_in == NULL) {
+        fprintf(stderr, "Error opening input file '%s'\n", argv[1]);
+        return 1;
+    }
+
+    // do mas in input file
+    int count = 0;
+    char **Mas = give_mas(f_in, &count);
+    fclose(f_in);
+
+    // ERR
+    if (count == 0) {fprintf(stderr, "Input file '%s' is empty.\n", argv[1]);free(Mas);return 1;}
+
+    // Qsort
+    qsort(Mas, count, sizeof(char*), compare_strings);
+
+    // open output file
+    FILE *f_out = fopen(argv[2], "w");
+    if (f_out == NULL) {
+        fprintf(stderr, "Error opening output file '%s'\n", argv[2]);
+        //free
+        for (int i = 0; i < count; i++) {
+            free(Mas[i]);
+        }
+        free(Mas);
+        return 1;
+    }
+
+    // write qsort str in output file
+    for (int i = 0; i < count; i++) {
+        fprintf(f_out, "%s\n", Mas[i]);
+        // free
+        free(Mas[i]); 
+    }
+    //free
     free(Mas);
+    fclose(f_out);
     return 0;
 }
