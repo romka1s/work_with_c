@@ -1,0 +1,27 @@
+int (*name)(int);
+int *name[10];
+int (*name)[10];
+int (*name[10])(int);
+int (*(*name)(int))(int);
+int *const name;
+const int *name;
+const int * const name;
+const void(*name)(int);
+void name(void(*name)(int));
+int (*name(void))[10];
+int (*name[10])[10];
+int (*(*name)(void))[10];
+int (*(*name[10])(int))(int);
+int (*(*(*name)(void))(int))(int);
+const int * volatile name;
+int (*const (*name (void))(int))(int);
+int (*name)(..);
+int (**name)(int);
+int **(*name[10])[10]
+const void (*name(..))(int);
+const int (*name(void))[10];
+int (*const name[10])(int);
+int (*name(..))(int);
+int (*(*name[10])(int))[10];
+int (*(*(* name (void)) (int))(int))(int);
+int (**(*name)(void))(int);
