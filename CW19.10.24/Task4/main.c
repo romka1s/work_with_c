@@ -5,8 +5,8 @@
 static const char INCLUDE[] = "const void (*signal(int sign, void (*func)(int)))(int)";
 
 enum TOKEN_E {
-    TOK_TYPE,    // Тип данных (void, int, char и т.д.)
-    TOK_ID,      // Идентификатор (имя функции, переменной)
+    TOK_TYPE,    // Тип данных (void, int, char, double)
+    TOK_ID,      // Идентификатор (имя функции, const, volatile)
     TOK_OB,      // Открывающая скобка '('
     TOK_CB,      // Закрывающая скобка ')'
     TOK_PIR,     // Указатель '*'
@@ -37,15 +37,12 @@ char *give_letter(const char *str, int *start, int *end) {
     }
 
     char *d = malloc((length + 1) * sizeof(char));
-    if (!d) {
-        perror("malloc");
-        exit(EXIT_FAILURE);
-    }
+    if (!d) {perror("malloc"); exit(1);} //err
 
     strncpy(d, str + local_start, length);
     d[length] = '\0';
 
-    *start = *end; // Обновляем позицию
+    *start = *end; 
     return d;
 }
 
@@ -56,10 +53,7 @@ struct TOKEN_S* tokenize(const char *str, int *token_count) {
     *token_count = 0;
 
     struct TOKEN_S *tokens = malloc(capacity * sizeof(struct TOKEN_S));
-    if (!tokens) {
-        perror("malloc");
-        exit(EXIT_FAILURE);
-    }
+    if (!tokens) {perror("malloc");exit(1);} //err
 
     while (str[end] != '\0') {
         // Пропускаем пробелы
@@ -69,84 +63,40 @@ struct TOKEN_S* tokenize(const char *str, int *token_count) {
             continue;
         }
 
-        // Определение текущего символа
         char current = str[end];
 
         // Проверка на символы
-        if (current == '(') {
+        if ((current == '(')  || (current == ')') || (current == '*')){
             // Добавляем токен
             if (*token_count >= capacity) {
                 capacity *= 2;
                 tokens = realloc(tokens, capacity * sizeof(struct TOKEN_S));
-                if (!tokens) {
-                    perror("realloc");
-                    exit(EXIT_FAILURE);
-                }
+                if (!tokens) {perror("realloc"); exit(1);} //err
             }
-            tokens[*token_count].s = strdup("(");
-            tokens[*token_count].t = TOK_OB;
+            if (current ==  '(') {
+                tokens[*token_count].s = strdup("("); 
+                tokens[*token_count].t = TOK_OB;
+            } else if (current == ')') {
+                tokens[*token_count].s = strdup(")");
+                tokens[*token_count].t = TOK_CB;
+            } else if (current == '*') {
+                tokens[*token_count].s = strdup("*");
+                tokens[*token_count].t = TOK_PIR;   
+            } else if (current == '*') {
+                tokens[*token_count].s = strdup(",");
+                tokens[*token_count].t = TOK_COMMA;
+            }
             (*token_count)++;
             end++;
             start = end;
             continue;
-        }
-        else if (current == ')') {
-            if (*token_count >= capacity) {
-                capacity *= 2;
-                tokens = realloc(tokens, capacity * sizeof(struct TOKEN_S));
-                if (!tokens) {
-                    perror("realloc");
-                    exit(EXIT_FAILURE);
-                }
-            }
-            tokens[*token_count].s = strdup(")");
-            tokens[*token_count].t = TOK_CB;
-            (*token_count)++;
-            end++;
-            start = end;
-            continue;
-        }
-        else if (current == '*') {
-            if (*token_count >= capacity) {
-                capacity *= 2;
-                tokens = realloc(tokens, capacity * sizeof(struct TOKEN_S));
-                if (!tokens) {
-                    perror("realloc");
-                    exit(EXIT_FAILURE);
-                }
-            }
-            tokens[*token_count].s = strdup("*");
-            tokens[*token_count].t = TOK_PIR;
-            (*token_count)++;
-            end++;
-            start = end;
-            continue;
-        }
-        else if (current == ',') {
-            if (*token_count >= capacity) {
-                capacity *= 2;
-                tokens = realloc(tokens, capacity * sizeof(struct TOKEN_S));
-                if (!tokens) {
-                    perror("realloc");
-                    exit(EXIT_FAILURE);
-                }
-            }
-            tokens[*token_count].s = strdup(",");
-            tokens[*token_count].t = TOK_COMMA;
-            (*token_count)++;
-            end++;
-            start = end;
-            continue;
-        }
+        } 
         else {
             // Попытка извлечь слово (тип или идентификатор)
             char *word = give_letter(str, &start, &end);
             if (word) {
-                // Определение типа токена
-                // Список типов данных языка C
-                const char *types[] = {
-                    "void", "int", "char", "double"
-                };
+                const char *types[] = {"void", "int", "char", "double"};
+
                 int num_types = sizeof(types) / sizeof(types[0]);
                 int is_type = 0;
                 for (int i = 0; i < num_types; i++) {
@@ -170,7 +120,6 @@ struct TOKEN_S* tokenize(const char *str, int *token_count) {
                 (*token_count)++;
             }
             else {
-                // Неизвестный символ, пропускаем
                 end++;
                 start = end;
             }
@@ -183,37 +132,21 @@ struct TOKEN_S* tokenize(const char *str, int *token_count) {
 // Функция для вывода токенов
 void print_tokens(struct TOKEN_S *tokens, int token_count) {
     for (int i = 0; i < token_count; i++) {
-        printf("Token %d: %-10s (", i + 1, tokens[i].s);
+        printf("Token %d: %-10s (", i, tokens[i].s);
         switch (tokens[i].t) {
-            case TOK_TYPE:
-                printf("TYPE");
-                break;
-            case TOK_ID:
-                printf("IDENTIFIER");
-                break;
-            case TOK_OB:
-                printf("OPEN_BRACKET '('");
-                break;
-            case TOK_CB:
-                printf("CLOSE_BRACKET ')'");
-                break;
-            case TOK_PIR:
-                printf("POINTER '*'");
-                break;
-            case TOK_COMMA:
-                printf("COMMA ','");
-                break;
-            case TOK_OTHER:
-                printf("OTHER");
-                break;
-            default:
-                printf("UNKNOWN");
+            case TOK_TYPE: printf("TYPE"); break;
+            case TOK_ID: printf("IDENTIFIER"); break;
+            case TOK_OB: printf("OPEN_BRACKET '('"); break;
+            case TOK_CB: printf("CLOSE_BRACKET ')'"); break;
+            case TOK_PIR: printf("POINTER '*'"); break;
+            case TOK_COMMA: printf("COMMA ','"); break;
+            case TOK_OTHER: printf("OTHER"); break;
+            default: printf("UNKNOWN");
         }
         printf(")\n");
     }
 }
 
-// Функция для освобождения памяти токенов
 void free_tokens(struct TOKEN_S *tokens, int token_count) {
     for (int i = 0; i < token_count; i++) {
         free(tokens[i].s);
