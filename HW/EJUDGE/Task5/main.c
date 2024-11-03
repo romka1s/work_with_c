@@ -9,7 +9,7 @@ struct FileData {
 
 int main(int argc, char *argv[]) {
     int num_files = argc - 1;
-    struct FileData *files = malloc(num_files * sizeof(struct FileData));
+    struct FileData *files = (struct FileData *)malloc(num_files * sizeof(struct FileData));
 
     int active_files = 0;
 
